@@ -1,7 +1,8 @@
 ARG harbor_base_image_version
 ARG harbor_base_namespace
 ARG NODE
-FROM ${NODE} as nodeportal
+# only need to build once on amd64 host
+FROM --platform=${BUILDPLATFORM:-linux/amd64} ${NODE} as nodeportal
 
 WORKDIR /build_dir
 
@@ -17,6 +18,7 @@ RUN node --max_old_space_size=2048 'node_modules/@angular/cli/bin/ng' build --co
 RUN npm install js-yaml@4.1.0 \
     && node -e "const yaml = require('js-yaml'); const fs = require('fs'); const swagger = yaml.load(fs.readFileSync('swagger.yaml', 'utf8')); fs.writeFileSync('swagger.json', JSON.stringify(swagger));"
 
+RUN cp swagger.yaml dist
 COPY ./LICENSE /build_dir/dist
 
 RUN cd app-swagger-ui && npm install --unsafe-perm
